@@ -37,6 +37,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/books", async (req, res) => {
+      const result = await booksCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/books/:cateName", async (req, res) => {
+      const cateName = req.params.cateName;
+      const query = { category_name: cateName };
+      const result = await booksCollection.find(query).toArray();
+      res.send(result);
+    });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
