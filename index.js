@@ -29,6 +29,7 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     const booksCollection = client.db("storySafari").collection("books");
+    const borrowCollection = client.db("storySafari").collection("borrow");
 
     // create data in database
     app.post("/books", async (req, res) => {
@@ -50,13 +51,36 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/book/:id', async (req, res) => {
-      const id = req.params.id
-      const filter = { _id: new ObjectId(id) }
-      const result = await booksCollection.findOne(filter)
-      res.send(result)
-      
-    })
+    app.get("/book/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await booksCollection.findOne(filter);
+      res.send(result);
+    });
+
+    //create data for borrow books
+    app.post("/borrow", async (req, res) => {
+      const borrow = req.body;
+      const result = await borrowCollection.insertOne(borrow);
+      res.send(result);
+    });
+
+    app.get("/borrowed/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await borrowCollection.find(filter).toArray();
+      res.send(result);
+    });
+
+    //update quantity
+    app.patch("/reduceQua/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await booksCollection.updateOne(query, {
+        $inc: { quantity: -1 },
+      });
+      res.send(result);
+    });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
