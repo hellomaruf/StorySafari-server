@@ -13,7 +13,7 @@ app.use(
   })
 );
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.0o9qayn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -42,12 +42,21 @@ async function run() {
       res.send(result);
     });
 
+    //find data by category name
     app.get("/books/:cateName", async (req, res) => {
       const cateName = req.params.cateName;
       const query = { category_name: cateName };
       const result = await booksCollection.find(query).toArray();
       res.send(result);
     });
+
+    app.get('/book/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const result = await booksCollection.findOne(filter)
+      res.send(result)
+      
+    })
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
