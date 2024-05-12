@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 require("dotenv").config();
@@ -31,6 +32,7 @@ async function run() {
     const booksCollection = client.db("storySafari").collection("books");
     const borrowCollection = client.db("storySafari").collection("borrow");
 
+   
     // create data in database
     app.post("/books", async (req, res) => {
       const books = req.body;
@@ -55,6 +57,35 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await booksCollection.findOne(filter);
+      res.send(result);
+    });
+
+    app.get("/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await booksCollection.findOne(filter);
+      res.send(result);
+    });
+    // update books
+    app.put("/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const book = req.body;
+      const updateBook = {
+        $set: {
+          category_name: book.category_name,
+          book_name: book.book_name,
+          rating: book.rating,
+          author_Name: book.author_Name,
+          photo: book.photo,
+        },
+      };
+      const result = await booksCollection.updateOne(
+        filter,
+        updateBook,
+        options
+      );
       res.send(result);
     });
 
