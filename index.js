@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 require("dotenv").config();
@@ -13,8 +15,27 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser());
 
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+//jwt middleware
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access 1" });
+  }
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(err);
+        return res.status(401).send({ message: "Unauthorized Access2" });
+      }
+      console.log(decoded);
+      req.user = decoded;
+      next();
+    });
+  }
+};
+
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.0o9qayn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -32,15 +53,53 @@ async function run() {
     const booksCollection = client.db("storySafari").collection("books");
     const borrowCollection = client.db("storySafari").collection("borrow");
 
-   
+    // jwt generated
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "365d",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ succuss: true });
+    });
+
+    // Clear token on logout
+    app.get("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          maxAge: 0,
+        })
+        .send({ success: true });
+    });
+
     // create data in database
-    app.post("/books", async (req, res) => {
+    app.post("/books",verifyToken, async (req, res) => {
+      const tokenData = req.user;
+      console.log(tokenData, "from token");
+      // const tokenEmail = req.user.email;
+      // const email = req.params.email;
+     
       const books = req.body;
       const result = await booksCollection.insertOne(books);
       res.send(result);
     });
 
-    app.get("/books", async (req, res) => {
+    app.get("/books",verifyToken, async (req, res) => {
+      const tokenData = req.user;
+      console.log(tokenData, "from token");
+      // const tokenEmail = req.user.email;
+      // const email = req.params.email;
+      // if (tokenEmail !== email) {
+      //   return res.status(403).send({ message: "Forbidden Access" });
+      // }
       const result = await booksCollection.find().toArray();
       res.send(result);
     });
@@ -97,7 +156,13 @@ async function run() {
     });
 
     app.get("/borrowed/:email", async (req, res) => {
+      const tokenData = req.user;
+      console.log(tokenData, "from token");
+      const tokenEmail = req.user.email;
       const email = req.params.email;
+      if (tokenEmail !== email) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
       const filter = { email: email };
       const result = await borrowCollection.find(filter).toArray();
       res.send(result);
