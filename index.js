@@ -11,7 +11,7 @@ require("dotenv").config();
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://storysafari.netlify.app"],
     credentials: true,
   })
 );
@@ -81,18 +81,18 @@ async function run() {
     });
 
     // create data in database
-    app.post("/books",verifyToken, async (req, res) => {
+    app.post("/books", verifyToken, async (req, res) => {
       const tokenData = req.user;
       console.log(tokenData, "from token");
       // const tokenEmail = req.user.email;
       // const email = req.params.email;
-     
+
       const books = req.body;
       const result = await booksCollection.insertOne(books);
       res.send(result);
     });
 
-    app.get("/books",verifyToken, async (req, res) => {
+    app.get("/books", verifyToken, async (req, res) => {
       const tokenData = req.user;
       console.log(tokenData, "from token");
       // const tokenEmail = req.user.email;
@@ -155,7 +155,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/borrowed/:email", async (req, res) => {
+    app.get("/borrowed/:email", verifyToken, async (req, res) => {
       const tokenData = req.user;
       console.log(tokenData, "from token");
       const tokenEmail = req.user.email;
@@ -165,6 +165,14 @@ async function run() {
       }
       const filter = { email: email };
       const result = await borrowCollection.find(filter).toArray();
+      res.send(result);
+    });
+
+    app.get("/isBorrowed/:email/:id", async (req, res) => {
+      // const id = req.params.id;
+      // const email = req.params.email;
+      const query = { book_id: req.params.id, email: req.params.email };
+      const result = await borrowCollection.findOne(query);
       res.send(result);
     });
 
