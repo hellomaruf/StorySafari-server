@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -5,13 +6,16 @@ const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
-require("dotenv").config();
 
 // middleware
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://storysafari.netlify.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://story-safari.web.app",
+      "https://story-safari.firebaseapp.com",
+    ],
     credentials: true,
   })
 );
