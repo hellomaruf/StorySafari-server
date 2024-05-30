@@ -5,10 +5,9 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 // middleware
-app.use(express.json());
 app.use(
   cors({
     origin: [
@@ -19,6 +18,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.json());
 app.use(cookieParser());
 
 //jwt middleware
@@ -56,7 +56,10 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     const booksCollection = client.db("storySafari").collection("books");
     const borrowCollection = client.db("storySafari").collection("borrow");
-
+    const onlineReadCollection = client
+      .db("storySafari")
+      .collection("onlineRead");
+    const cartCollection = client.db("storySafari").collection("cart");
     // jwt generated
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -203,6 +206,12 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await borrowCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Get online read books
+    app.get("/onlineReadBooks", async (req, res) => {
+      const result = await onlineReadCollection.find().toArray();
       res.send(result);
     });
 
