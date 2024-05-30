@@ -215,6 +215,18 @@ async function run() {
       res.send(result);
     });
 
+    // Added cart data
+    app.post("/cartData", async (req, res) => {
+      const cart = req.body;
+      const result = await cartCollection.insertOne(cart);
+      res.send(result);
+    });
+
+    app.get("/cartData", async (req, res) => {
+      const result = await cartCollection.find().toArray();
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
